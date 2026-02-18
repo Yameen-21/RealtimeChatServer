@@ -1,0 +1,193 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Chat</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            background: white;
+            width: 420px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #4a6cf7;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .chat-box {
+            height: 350px;
+            padding: 15px;
+            overflow-y: auto;
+            background: #f5f6fa;
+        }
+
+        .message {
+            margin: 8px 0;
+            padding: 10px 12px;
+            border-radius: 8px;
+            max-width: 75%;
+            word-wrap: break-word;
+            font-size: 14px;
+        }
+
+        .timestamp {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 3px;
+        }
+
+        .user {
+            background: #4a6cf7;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .bot {
+            background: #e4e6eb;
+            color: black;
+            margin-right: auto;
+        }
+
+        .typing {
+            font-style: italic;
+            opacity: 0.6;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #ddd;
+        }
+
+            .chat-input input {
+                flex: 1;
+                padding: 10px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                outline: none;
+            }
+
+            .chat-input button {
+                margin-left: 8px;
+                padding: 10px 15px;
+                border: none;
+                background: #4a6cf7;
+                color: white;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: bold;
+            }
+
+                .chat-input button:disabled {
+                    background: gray;
+                    cursor: not-allowed;
+                }
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            🤖 AI Chatbot
+        </div>
+
+        <div id="chatBox" class="chat-box"></div>
+
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type your message..." />
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+
+        const socket = new WebSocket("wss://localhost:7030/chat");
+        const input = document.getElementById("messageInput");
+        const sendBtn = document.getElementById("sendBtn");
+
+        socket.onmessage = (event) => {
+            removeTypingIndicator();
+
+            const data = JSON.parse(event.data);
+            addMessage(data.Message, "bot");
+            sendBtn.disabled = false;
+        };
+
+        input.addEventListener("keypress", function (e) {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        function sendMessage() {
+
+            if (input.value.trim() === "") return;
+
+            const message = {
+                message: input.value
+            };
+
+            socket.send(JSON.stringify(message));
+
+            addMessage(input.value, "user");
+
+            showTypingIndicator();
+
+            input.value = "";
+            sendBtn.disabled = true;
+        }
+
+        function addMessage(text, type) {
+            const chatBox = document.getElementById("chatBox");
+
+            const div = document.createElement("div");
+            div.classList.add("message", type);
+
+            const time = new Date().toLocaleTimeString();
+
+            div.innerHTML = `${text}<div class="timestamp">${time}</div>`;
+
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatBox = document.getElementById("chatBox");
+
+            const div = document.createElement("div");
+            div.classList.add("message", "bot", "typing");
+            div.id = "typing";
+
+            div.innerText = "Bot is typing...";
+
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typing = document.getElementById("typing");
+            if (typing) typing.remove();
+        }
+
+    </script>
+
+</body>
+</html>
