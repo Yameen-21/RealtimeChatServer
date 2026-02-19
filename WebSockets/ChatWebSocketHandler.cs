@@ -14,7 +14,7 @@ namespace RealtimeChatServer.WebSockets
         {
             _dialogflowService = dialogflowService;
         }
-
+        
         public async Task HandleAsync(WebSocket webSocket)
         {
             var buffer = new byte[1024 * 4];
